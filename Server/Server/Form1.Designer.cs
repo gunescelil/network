@@ -29,13 +29,25 @@
         private void InitializeComponent()
         {
             this.serverMonitor = new System.Windows.Forms.RichTextBox();
+<<<<<<< HEAD
+=======
             this.bt_StartServer = new System.Windows.Forms.Button();
             this.tb_portNumber = new System.Windows.Forms.TextBox();
             this.label1 = new System.Windows.Forms.Label();
+>>>>>>> refs/remotes/origin/master
             this.SuspendLayout();
             // 
             // serverMonitor
             // 
+<<<<<<< HEAD
+            this.serverMonitor.BorderStyle = System.Windows.Forms.BorderStyle.None;
+            this.serverMonitor.Location = new System.Drawing.Point(51, 143);
+            this.serverMonitor.Name = "serverMonitor";
+            this.serverMonitor.Size = new System.Drawing.Size(388, 224);
+            this.serverMonitor.TabIndex = 0;
+            this.serverMonitor.Text = "";
+            // 
+=======
             this.serverMonitor.Location = new System.Drawing.Point(52, 70);
             this.serverMonitor.Name = "serverMonitor";
             this.serverMonitor.Size = new System.Drawing.Size(446, 311);
@@ -68,15 +80,22 @@
             this.label1.TabIndex = 3;
             this.label1.Text = "Port Number";
             // 
+>>>>>>> refs/remotes/origin/master
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
+<<<<<<< HEAD
+            this.ClientSize = new System.Drawing.Size(818, 475);
+            this.Controls.Add(this.serverMonitor);
+            this.MaximizeBox = false;
+=======
             this.ClientSize = new System.Drawing.Size(964, 455);
             this.Controls.Add(this.label1);
             this.Controls.Add(this.tb_portNumber);
             this.Controls.Add(this.bt_StartServer);
             this.Controls.Add(this.serverMonitor);
+>>>>>>> refs/remotes/origin/master
             this.Name = "Form1";
             this.Text = "Form1";
             this.ResumeLayout(false);
@@ -87,6 +106,8 @@
         #endregion
 
         private System.Windows.Forms.RichTextBox serverMonitor;
+<<<<<<< HEAD
+=======
         private System.Windows.Forms.Button bt_StartServer;
         private System.Windows.Forms.TextBox tb_portNumber;
         private System.Windows.Forms.Label label1;
@@ -103,6 +124,7 @@
 
 
 
+>>>>>>> refs/remotes/origin/master
     }
 }
 

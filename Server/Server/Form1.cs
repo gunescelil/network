@@ -3,12 +3,17 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
 using System.Drawing;
+<<<<<<< HEAD
+using System.Linq;
+using System.Text;
+=======
 using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
 using System.Threading;
+>>>>>>> refs/remotes/origin/master
 using System.Threading.Tasks;
 using System.Windows.Forms;
 
@@ -16,6 +21,13 @@ namespace Server
 {
     public partial class Form1 : Form
     {
+<<<<<<< HEAD
+        public Form1()
+        {
+            InitializeComponent();
+        }
+    }
+=======
         static bool listening = false;
         static bool terminating = false;
         static bool accept = true;
@@ -201,4 +213,5 @@ namespace Server
 
 
     
+>>>>>>> refs/remotes/origin/master
 }
