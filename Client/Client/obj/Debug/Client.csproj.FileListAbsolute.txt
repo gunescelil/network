@@ -1,0 +1,2 @@
+D:\Visual Studio Projects\Client\Client\bin\Debug\Client.exe.config
+D:\Github for VS\Client\Client\bin\Debug\Client.exe.config
