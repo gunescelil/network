@@ -1,3 +1,5 @@
 D:\Visual Studio Projects\Server\Server\bin\Debug\Server.exe.config
 D:\Github for VS\Server\Server\bin\Debug\Server.exe.config
 D:\Github for VS\network\Server\Server\bin\Debug\Server.exe.config
+D:\Github for VS\network\Server\Server\obj\Debug\Server.exe
+D:\Github for VS\network\Server\Server\obj\Debug\Server.pdb
