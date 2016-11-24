@@ -1,5 +1,3 @@
-D:\Visual Studio Projects\Server\Server\bin\Debug\Server.exe.config
-D:\Github for VS\Server\Server\bin\Debug\Server.exe.config
 D:\Github for VS\network\Server\Server\bin\Debug\Server.exe.config
 D:\Github for VS\network\Server\Server\bin\Debug\Server.exe
 D:\Github for VS\network\Server\Server\bin\Debug\Server.pdb
@@ -8,4 +6,3 @@ D:\Github for VS\network\Server\Server\obj\Debug\Server.Properties.Resources.res
 D:\Github for VS\network\Server\Server\obj\Debug\Server.csproj.GenerateResource.Cache
 D:\Github for VS\network\Server\Server\obj\Debug\Server.exe
 D:\Github for VS\network\Server\Server\obj\Debug\Server.pdb
-D:\Github for VS\network\Server\Server\obj\Debug\Server.csprojResolveAssemblyReference.cache
