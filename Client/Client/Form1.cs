@@ -9,6 +9,8 @@ using System.Net.Sockets;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using System.Threading;
+
 
 namespace Client
 {
@@ -16,54 +18,160 @@ namespace Client
     {
         //you dont have to declare the variables as static in the forms application
         static bool terminating = false;
-        static Socket client = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
+        static Socket client; //= new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
         int serverPort;
         string serverIP;
         public static String fileName;
         public string SendingFilePath = string.Empty;
         public TextBox tb_File;
-        public RichTextBox monitor;
+        public static RichTextBox monitor;
         private const int BufferSize = 1024;
+        public static String username;
+        public TextBox nameUserTb;
+        Button connectButton, disconnectButton;
+        TextBox PortNumber;
+        TextBox IP;
+
+
+        Thread thrReceive;
 
         public Form1()
         {
             InitializeComponent();
+            Control.CheckForIllegalCrossThreadCalls = false;
             tb_File = (TextBox)tb_FileName;
             monitor = (RichTextBox)clientMonitor;
+            nameUserTb = (TextBox)tb_UserName;
+            connectButton = (Button)connectBtn;
+            disconnectButton = (Button)btn_Disconnect;
+            PortNumber = (TextBox)tb_ServerPort;
+            IP = (TextBox)tb_ServerIp;
 
         }
 
         private void bt_SendFile_Click(object sender, EventArgs e)
         {
             try {
-                //this port will be used by clients to connect
-                TextBox PortNumber = (TextBox)tb_ServerPort;
-                serverPort = Convert.ToInt32(PortNumber.Text);
 
-                TextBox IP = (TextBox)tb_ServerIp;
-                serverIP = (IP.Text);
-
-                client.Connect(serverIP, serverPort);
-                
                 fileName = tb_File.Text;
                 if (fileName != "")
                 {
+                    String[] filePathArray = fileName.Split('\\');
+                    monitor.AppendText("Trying to send the file named " + filePathArray[filePathArray.Length -1 ] + "\n");
                     SendFile(fileName);
                 }
+                else {
+                    monitor.AppendText(Environment.NewLine + "Please choose a file\n");
+                }
+
+                
+                
             }
             catch
             {
 
-                monitor.AppendText(Environment.NewLine + "Cannot connected to the specified server\n");
-                monitor.AppendText(Environment.NewLine + "terminating...");
+                //monitor.AppendText("Cannot connected to the specified server\n");
+                //monitor.AppendText("terminating...\n");
                 
             }
+            
 
 
         }
 
+        private void connectBtn_Click(object sender, EventArgs e)
+        {
+            //this port will be used by clients to connect
+            client = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
+            serverPort = Convert.ToInt32(PortNumber.Text);
+
+            // Changing UI
+            connectButton.Enabled = false;
+            nameUserTb.Enabled = false;
+            PortNumber.Enabled = false;
+            IP.Enabled = false;
+
+             
+            serverIP = (IP.Text);
+            try { 
+
+                client.Connect(serverIP, serverPort);
+            }
+            catch
+            {
+                monitor.AppendText("Something went wrong while connecting.\n");
+            }
+
+
+            thrReceive = new Thread(new ThreadStart(Receive));
+            thrReceive.Start();
+            username = nameUserTb.Text;
+
+        }
+
+
+        //this function will be used in the thread
+        static private void Receive()
+        {
+            bool connected = true;
+            //Console.WriteLine("Connected to the server.");
+            byte[] bufferName = Encoding.Default.GetBytes(username);
+            client.Send(bufferName);
+
+
+            while (connected)
+            {
+                try
+                {
+                    byte[] buffer = new byte[64];
+
+                    int rec = client.Receive(buffer);
+
+                    if (rec <= 0)
+                    {
+                        throw new SocketException();
+                    }
+
+                    string newmessage = Encoding.Default.GetString(buffer);
+                    newmessage = newmessage.Substring(0, newmessage.IndexOf("\0"));
+
+                    if (newmessage.Equals("usernameExists"))
+                    {
+                        connected = false;
+                        //button
+
+
+                        client.Close();
+                        monitor.AppendText("Username is already connected to the server.\n");
+
+                    }
+                    else {
+                        monitor.AppendText("Connected to server\n");
+
+
+                    }
+                    
+
+                    //Console.Write("Server: " + newmessage + "\r\n");
+                }
+                catch
+                {
+                    if (!terminating)
+                    {
+                        monitor.AppendText("Connection has been terminated...\n");
+                        //Console.Write("Connection has been terminated...\n");
+                        
+                    }
+                    connected = false;
+                    
+                }
+            }
+        }
+
+
         public void SendFile(String path)
         {
+
             byte[] SendingBuffer = null;
             FileStream Fs = new FileStream(path, FileMode.Open, FileAccess.Read);
             try
@@ -72,6 +180,18 @@ namespace Client
                 int TotalLength = (int)Fs.Length;
                 int CurrentPacketLength;
                 int counter = 0;
+                
+
+                String [] nameArray = fileName.Split('\\');
+                String fileToSend = nameArray[ nameArray.Length-1 ];
+
+                monitor.AppendText("Started sending the file named " + fileToSend + "\n");
+
+                SendingBuffer = Encoding.Default.GetBytes(fileToSend);
+                client.Send(SendingBuffer);
+
+                SendingBuffer = Encoding.Default.GetBytes(NoOfPackets.ToString());
+                client.Send(SendingBuffer);
 
                 for (int i = 0; i< NoOfPackets; i++)
                 {
@@ -84,10 +204,13 @@ namespace Client
                     {
                         CurrentPacketLength = TotalLength;
                     }
+                    
                     SendingBuffer = new Byte[CurrentPacketLength];
                     Fs.Read(SendingBuffer, 0, CurrentPacketLength);
                     client.Send(SendingBuffer);
                 }
+
+                monitor.AppendText("Sent the file named " + fileToSend + "\n");
                 Fs.Close();
                 
             }
@@ -105,7 +228,7 @@ namespace Client
 
             //we can send a byte[] 
             client.Send(buffer);
-            Console.Write("Your message has been sent.\n");
+            //Console.Write("Your message has been sent.\n");
         }
 
         private void bt_Browse_Click(object sender, EventArgs e)
@@ -119,6 +242,19 @@ namespace Client
             {
                 tb_File.Text = Dlg.FileName;
             }
+        }
+
+        private void btn_Disconnect_Click(object sender, EventArgs e)
+        {
+            connectButton.Enabled = true;
+            nameUserTb.Enabled = true;
+            PortNumber.Enabled = true;
+            IP.Enabled = true;
+
+            SendMessage("close");          
+              
+            client.Close();
+            monitor.AppendText(Environment.NewLine + "Disconnected from server " + "");
         }
     }
 }

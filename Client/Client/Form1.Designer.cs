@@ -39,6 +39,11 @@
             this.tb_FileName = new System.Windows.Forms.TextBox();
             this.Files = new System.Windows.Forms.Label();
             this.clientMonitor = new System.Windows.Forms.RichTextBox();
+            this.tb_UserName = new System.Windows.Forms.TextBox();
+            this.label3 = new System.Windows.Forms.Label();
+            this.connectBtn = new System.Windows.Forms.Button();
+            this.label4 = new System.Windows.Forms.Label();
+            this.btn_Disconnect = new System.Windows.Forms.Button();
             ((System.ComponentModel.ISupportInitialize)(this.bindingSource1)).BeginInit();
             this.SuspendLayout();
             // 
@@ -46,7 +51,7 @@
             // 
             this.tb_ServerIp.Location = new System.Drawing.Point(31, 39);
             this.tb_ServerIp.Name = "tb_ServerIp";
-            this.tb_ServerIp.Size = new System.Drawing.Size(236, 22);
+            this.tb_ServerIp.Size = new System.Drawing.Size(310, 22);
             this.tb_ServerIp.TabIndex = 0;
             // 
             // tb_ServerPort
@@ -76,7 +81,7 @@
             // 
             // bt_SendFile
             // 
-            this.bt_SendFile.Location = new System.Drawing.Point(31, 147);
+            this.bt_SendFile.Location = new System.Drawing.Point(31, 134);
             this.bt_SendFile.Name = "bt_SendFile";
             this.bt_SendFile.Size = new System.Drawing.Size(161, 28);
             this.bt_SendFile.TabIndex = 4;
@@ -86,7 +91,7 @@
             // 
             // bt_Browse
             // 
-            this.bt_Browse.Location = new System.Drawing.Point(31, 215);
+            this.bt_Browse.Location = new System.Drawing.Point(31, 183);
             this.bt_Browse.Name = "bt_Browse";
             this.bt_Browse.Size = new System.Drawing.Size(161, 28);
             this.bt_Browse.TabIndex = 5;
@@ -96,7 +101,7 @@
             // 
             // tb_FileName
             // 
-            this.tb_FileName.Location = new System.Drawing.Point(241, 215);
+            this.tb_FileName.Location = new System.Drawing.Point(92, 223);
             this.tb_FileName.Name = "tb_FileName";
             this.tb_FileName.Size = new System.Drawing.Size(236, 22);
             this.tb_FileName.TabIndex = 6;
@@ -104,7 +109,7 @@
             // Files
             // 
             this.Files.AutoSize = true;
-            this.Files.Location = new System.Drawing.Point(238, 180);
+            this.Files.Location = new System.Drawing.Point(28, 223);
             this.Files.Name = "Files";
             this.Files.Size = new System.Drawing.Size(37, 17);
             this.Files.TabIndex = 7;
@@ -112,17 +117,67 @@
             // 
             // clientMonitor
             // 
-            this.clientMonitor.Location = new System.Drawing.Point(301, 39);
+            this.clientMonitor.Location = new System.Drawing.Point(369, 104);
             this.clientMonitor.Name = "clientMonitor";
-            this.clientMonitor.Size = new System.Drawing.Size(196, 123);
+            this.clientMonitor.Size = new System.Drawing.Size(379, 158);
             this.clientMonitor.TabIndex = 8;
             this.clientMonitor.Text = "";
+            // 
+            // tb_UserName
+            // 
+            this.tb_UserName.Location = new System.Drawing.Point(369, 39);
+            this.tb_UserName.Name = "tb_UserName";
+            this.tb_UserName.Size = new System.Drawing.Size(196, 22);
+            this.tb_UserName.TabIndex = 9;
+            // 
+            // label3
+            // 
+            this.label3.AutoSize = true;
+            this.label3.Location = new System.Drawing.Point(366, 19);
+            this.label3.Name = "label3";
+            this.label3.Size = new System.Drawing.Size(118, 17);
+            this.label3.TabIndex = 10;
+            this.label3.Text = "Client User Name";
+            // 
+            // connectBtn
+            // 
+            this.connectBtn.Location = new System.Drawing.Point(150, 84);
+            this.connectBtn.Name = "connectBtn";
+            this.connectBtn.Size = new System.Drawing.Size(75, 23);
+            this.connectBtn.TabIndex = 11;
+            this.connectBtn.Text = "Connect";
+            this.connectBtn.UseVisualStyleBackColor = true;
+            this.connectBtn.Click += new System.EventHandler(this.connectBtn_Click);
+            // 
+            // label4
+            // 
+            this.label4.AutoSize = true;
+            this.label4.Location = new System.Drawing.Point(366, 84);
+            this.label4.Name = "label4";
+            this.label4.Size = new System.Drawing.Size(94, 17);
+            this.label4.TabIndex = 12;
+            this.label4.Text = "Client Monitor";
+            // 
+            // btn_Disconnect
+            // 
+            this.btn_Disconnect.Location = new System.Drawing.Point(241, 84);
+            this.btn_Disconnect.Name = "btn_Disconnect";
+            this.btn_Disconnect.Size = new System.Drawing.Size(100, 23);
+            this.btn_Disconnect.TabIndex = 13;
+            this.btn_Disconnect.Text = "Disconnect";
+            this.btn_Disconnect.UseVisualStyleBackColor = true;
+            this.btn_Disconnect.Click += new System.EventHandler(this.btn_Disconnect_Click);
             // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(525, 328);
+            this.ClientSize = new System.Drawing.Size(778, 304);
+            this.Controls.Add(this.btn_Disconnect);
+            this.Controls.Add(this.label4);
+            this.Controls.Add(this.connectBtn);
+            this.Controls.Add(this.label3);
+            this.Controls.Add(this.tb_UserName);
             this.Controls.Add(this.clientMonitor);
             this.Controls.Add(this.Files);
             this.Controls.Add(this.tb_FileName);
@@ -152,6 +207,11 @@
         private System.Windows.Forms.TextBox tb_FileName;
         private System.Windows.Forms.Label Files;
         private System.Windows.Forms.RichTextBox clientMonitor;
+        private System.Windows.Forms.TextBox tb_UserName;
+        private System.Windows.Forms.Label label3;
+        private System.Windows.Forms.Button connectBtn;
+        private System.Windows.Forms.Label label4;
+        private System.Windows.Forms.Button btn_Disconnect;
     }
 }
 

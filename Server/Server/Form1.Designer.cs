@@ -29,21 +29,15 @@
         private void InitializeComponent()
         {
             this.serverMonitor = new System.Windows.Forms.RichTextBox();
-
             this.tb_portNumber = new System.Windows.Forms.TextBox();
             this.label1 = new System.Windows.Forms.Label();
             this.btStartServer = new System.Windows.Forms.Button();
-
-           
-
+            this.label2 = new System.Windows.Forms.Label();
             this.SuspendLayout();
             // 
             // serverMonitor
             // 
-
-            this.serverMonitor.Location = new System.Drawing.Point(42, 113);
-
-
+            this.serverMonitor.Location = new System.Drawing.Point(25, 54);
             this.serverMonitor.Name = "serverMonitor";
             this.serverMonitor.Size = new System.Drawing.Size(440, 211);
             this.serverMonitor.TabIndex = 0;
@@ -65,10 +59,9 @@
             this.label1.TabIndex = 2;
             this.label1.Text = "Port Number";
             // 
-
             // btStartServer
             // 
-            this.btStartServer.Location = new System.Drawing.Point(539, 231);
+            this.btStartServer.Location = new System.Drawing.Point(539, 188);
             this.btStartServer.Name = "btStartServer";
             this.btStartServer.Size = new System.Drawing.Size(176, 23);
             this.btStartServer.TabIndex = 3;
@@ -76,20 +69,25 @@
             this.btStartServer.UseVisualStyleBackColor = true;
             this.btStartServer.Click += new System.EventHandler(this.bt_StartServer_Click);
             // 
-
+            // label2
+            // 
+            this.label2.AutoSize = true;
+            this.label2.Location = new System.Drawing.Point(22, 23);
+            this.label2.Name = "label2";
+            this.label2.Size = new System.Drawing.Size(101, 17);
+            this.label2.TabIndex = 4;
+            this.label2.Text = "Server Monitor";
+            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-
-           
-
-            this.ClientSize = new System.Drawing.Size(964, 455);
+            this.ClientSize = new System.Drawing.Size(754, 364);
+            this.Controls.Add(this.label2);
             this.Controls.Add(this.btStartServer);
             this.Controls.Add(this.label1);
             this.Controls.Add(this.tb_portNumber);
             this.Controls.Add(this.serverMonitor);
-
             this.Name = "Form1";
             this.Text = "Server";
             this.ResumeLayout(false);
@@ -104,13 +102,7 @@
         private System.Windows.Forms.TextBox tb_portNumber;
         private System.Windows.Forms.Label label1;
         private System.Windows.Forms.Button btStartServer;
-
-       
-
-
-
-
-
+        private System.Windows.Forms.Label label2;
     }
 }
 
