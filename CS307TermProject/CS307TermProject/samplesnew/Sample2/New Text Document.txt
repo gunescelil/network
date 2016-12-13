@@ -1,2 +1,0 @@
-results3.txt => when the input asked by syscall is entered as 1 (integer)
-results4.txt => when the input asked by syscall is entered as 1000 (integer)
