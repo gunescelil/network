@@ -123,12 +123,11 @@ namespace Server
             userNameString = System.Text.Encoding.UTF8.GetString(userNameBuffer,0 , recCharNum);
             monitor.AppendText("A user named " + userNameString + " is trying to connect\n" );
 
-
             for (int i = 0; i < nameList.Count; i++)
             {
                 if (userNameString.Equals(nameList[i]))
                 {
-
+                    monitor.AppendText("User " + userNameString + " is already connected\n");
                     return true;
                 }
             }
@@ -140,6 +139,9 @@ namespace Server
             return false;
         }
 
+        /* This function is to receive text messages from client.
+         * But it is not used and implemented
+         * */
         static private void ReceiveMessage()
         {
             bool connected = true;
@@ -190,15 +192,23 @@ namespace Server
             String filename = System.Text.Encoding.UTF8.GetString(namebuffer, 0, receivedNameCharCount);
             //filename.Substring(0, filename.IndexOf('0'));
 
-            String myDir = "C:\\Users\\asus\\Desktop\\Server\\" + nameList[nameList.Count-1];
+            byte[] countBuffer = new byte[64];
+            int numberOfPacketsByteNumber= n.Receive(countBuffer); // The number of packets
+            String numberOfPacketsString = System.Text.Encoding.UTF8.GetString(countBuffer, 0, numberOfPacketsByteNumber);
+            int packetNumberToReceive = Int32.Parse(numberOfPacketsString);
+          
+
+            //String myDir = "C:\\Users\\asus\\Desktop\\Server\\" + nameList[nameList.Count-1];
+            String myDir = Environment.GetFolderPath(Environment.SpecialFolder.Desktop) + "\\Server\\" +nameList[nameList.Count -1];
             System.IO.Directory.CreateDirectory(myDir);
-            Stream fileStream = File.OpenWrite("C:\\Users\\asus\\Desktop\\Server\\"+ userNameString+ "\\"+filename);
+            Stream fileStream = File.OpenWrite(Environment.GetFolderPath(Environment.SpecialFolder.Desktop) + "\\Server\\"+ userNameString+ "\\"+filename);
 
             monitor.AppendText(userNameString + " is uploading a file named" +  filename + "\n");
 
-            
+            // TODO: 
 
-            while (connected)
+            int i = 0;
+            while (i < packetNumberToReceive)
             {
                 try
                 {
@@ -233,6 +243,7 @@ namespace Server
                     
                     
                 }
+                i++;
             }
             monitor.AppendText(userNameString + " finished uploading " + filename + "\n");
             fileStream.Close();

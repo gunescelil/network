@@ -190,6 +190,9 @@ namespace Client
                 SendingBuffer = Encoding.Default.GetBytes(fileToSend);
                 client.Send(SendingBuffer);
 
+                SendingBuffer = Encoding.Default.GetBytes(NoOfPackets.ToString());
+                client.Send(SendingBuffer);
+
                 for (int i = 0; i< NoOfPackets; i++)
                 {
                     if(TotalLength > BufferSize)

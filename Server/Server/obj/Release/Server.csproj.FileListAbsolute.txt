@@ -1,0 +1,9 @@
+D:\Github for VS\network\Server\Server\bin\Release\Server.exe.config
+D:\Github for VS\network\Server\Server\bin\Release\Server.exe
+D:\Github for VS\network\Server\Server\bin\Release\Server.pdb
+D:\Github for VS\network\Server\Server\obj\Release\Server.Form1.resources
+D:\Github for VS\network\Server\Server\obj\Release\Server.Properties.Resources.resources
+D:\Github for VS\network\Server\Server\obj\Release\Server.csproj.GenerateResource.Cache
+D:\Github for VS\network\Server\Server\obj\Release\Server.exe
+D:\Github for VS\network\Server\Server\obj\Release\Server.pdb
+D:\Github for VS\network\Server\Server\obj\Release\Server.csprojResolveAssemblyReference.cache
