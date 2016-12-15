@@ -49,22 +49,31 @@ namespace Client
 
         }
 
+        static void SendMessage(string message)
+        {
+            byte[] buffer = Encoding.Default.GetBytes(message);
+
+            //we can send a byte[] 
+            client.Send(buffer);
+            //Console.Write("Your message has been sent.\n");
+        }
+
         private void bt_SendFile_Click(object sender, EventArgs e)
         {
-            try {
+            try
+            {
 
                 fileName = tb_File.Text;
                 if (fileName != "")
                 {
                     String[] filePathArray = fileName.Split('\\');
-                    monitor.AppendText("Trying to send the file named " + filePathArray[filePathArray.Length -1 ] + "\n");
+                    monitor.AppendText("Trying to send the file named " + filePathArray[filePathArray.Length - 1] + "\n");
                     SendFile(fileName);
                 }
-                else {
+                else
+                {
                     monitor.AppendText(Environment.NewLine + "Please choose a file\n");
                 }
-
-                
                 
             }
             catch
@@ -72,9 +81,9 @@ namespace Client
 
                 //monitor.AppendText("Cannot connected to the specified server\n");
                 //monitor.AppendText("terminating...\n");
-                
+
             }
-            
+
 
 
         }
@@ -91,10 +100,10 @@ namespace Client
             PortNumber.Enabled = false;
             IP.Enabled = false;
 
-             
-            serverIP = (IP.Text);
-            try { 
 
+            serverIP = (IP.Text);
+            try
+            {
                 client.Connect(serverIP, serverPort);
             }
             catch
@@ -139,18 +148,18 @@ namespace Client
                     {
                         connected = false;
                         //button
-
-
+                        
                         client.Close();
                         monitor.AppendText("Username is already connected to the server.\n");
 
                     }
-                    else {
+                    else
+                    {
                         monitor.AppendText("Connected to server\n");
 
 
                     }
-                    
+
 
                     //Console.Write("Server: " + newmessage + "\r\n");
                 }
@@ -160,10 +169,10 @@ namespace Client
                     {
                         monitor.AppendText("Connection has been terminated...\n");
                         //Console.Write("Connection has been terminated...\n");
-                        
+
                     }
                     connected = false;
-                    
+
                 }
             }
         }
@@ -180,10 +189,10 @@ namespace Client
                 int TotalLength = (int)Fs.Length;
                 int CurrentPacketLength;
                 int counter = 0;
-                
 
-                String [] nameArray = fileName.Split('\\');
-                String fileToSend = nameArray[ nameArray.Length-1 ];
+
+                String[] nameArray = fileName.Split('\\');
+                String fileToSend = nameArray[nameArray.Length - 1];
 
                 monitor.AppendText("Started sending the file named " + fileToSend + "\n");
 
@@ -193,9 +202,9 @@ namespace Client
                 SendingBuffer = Encoding.Default.GetBytes(NoOfPackets.ToString());
                 client.Send(SendingBuffer);
 
-                for (int i = 0; i< NoOfPackets; i++)
+                for (int i = 0; i < NoOfPackets; i++)
                 {
-                    if(TotalLength > BufferSize)
+                    if (TotalLength > BufferSize)
                     {
                         CurrentPacketLength = BufferSize;
                         TotalLength = TotalLength - CurrentPacketLength;
@@ -204,7 +213,7 @@ namespace Client
                     {
                         CurrentPacketLength = TotalLength;
                     }
-                    
+
                     SendingBuffer = new Byte[CurrentPacketLength];
                     Fs.Read(SendingBuffer, 0, CurrentPacketLength);
                     client.Send(SendingBuffer);
@@ -212,7 +221,7 @@ namespace Client
 
                 monitor.AppendText("Sent the file named " + fileToSend + "\n");
                 Fs.Close();
-                
+
             }
             catch
             {
@@ -222,14 +231,7 @@ namespace Client
         }
 
 
-        static void SendMessage(string message)
-        {
-            byte[] buffer = Encoding.Default.GetBytes(message);
-
-            //we can send a byte[] 
-            client.Send(buffer);
-            //Console.Write("Your message has been sent.\n");
-        }
+        
 
         private void bt_Browse_Click(object sender, EventArgs e)
         {
@@ -251,8 +253,8 @@ namespace Client
             PortNumber.Enabled = true;
             IP.Enabled = true;
 
-            SendMessage("close");          
-              
+            SendMessage("close");
+
             client.Close();
             monitor.AppendText(Environment.NewLine + "Disconnected from server " + "");
         }

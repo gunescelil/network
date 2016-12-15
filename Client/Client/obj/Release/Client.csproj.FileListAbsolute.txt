@@ -1,0 +1,8 @@
+D:\Github for VS\network\Client\Client\bin\Release\Client.exe.config
+D:\Github for VS\network\Client\Client\bin\Release\Client.exe
+D:\Github for VS\network\Client\Client\bin\Release\Client.pdb
+D:\Github for VS\network\Client\Client\obj\Release\Client.Form1.resources
+D:\Github for VS\network\Client\Client\obj\Release\Client.Properties.Resources.resources
+D:\Github for VS\network\Client\Client\obj\Release\Client.csproj.GenerateResource.Cache
+D:\Github for VS\network\Client\Client\obj\Release\Client.exe
+D:\Github for VS\network\Client\Client\obj\Release\Client.pdb
