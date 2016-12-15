@@ -99,6 +99,10 @@ namespace Server
                         Thread thrReceive;
                         thrReceive = new Thread(new ThreadStart(Receive));
                         thrReceive.Start();
+
+                        int managedThreadId = Thread.CurrentThread.ManagedThreadId;
+                        Console.WriteLine("ManagedThreadId = " + managedThreadId);
+                        monitor.AppendText("ManagedThreadId = " + managedThreadId);
                         //Thread thrMessage;
                         //thrMessage = new Thread(new ThreadStart(ReceiveMessage));
                         //thrMessage.Start();
@@ -183,11 +187,11 @@ namespace Server
         //displays the received message in the console.
         static private void Receive()
         {
-
+            Socket n = socketList[socketList.Count - 1];
             bool connected = true;
             while (connected)
             {
-                Socket n = socketList[socketList.Count - 1];
+                //Socket n = socketList[socketList.Count - 1];
                 byte[] namebuffer = new byte[64];
                 int receivedNameCharCount = n.Receive(namebuffer);
                 if (System.Text.Encoding.UTF8.GetString(namebuffer, 0, receivedNameCharCount).Equals("close"))
@@ -199,67 +203,80 @@ namespace Server
                 }
                 else
                 {
+                    String username = "", filename = "";
+                    int packetNumberToReceive = 0;
                     // String filename = Convert.ToString(namebuffer);
-                    String filename = System.Text.Encoding.UTF8.GetString(namebuffer, 0, receivedNameCharCount);
-                    //filename.Substring(0, filename.IndexOf('0'));
+                    String[] narray = System.Text.Encoding.UTF8.GetString(namebuffer, 0, receivedNameCharCount).Split('\\');
+                    if (narray[0].Length >= 3)
+                        if (narray[0].Substring(0, 3) == "PNP")
+                        {
+                            username = narray[0].Substring(3, narray[0].Length - 3);
 
-                    byte[] countBuffer = new byte[64];
-                    int numberOfPacketsByteNumber = n.Receive(countBuffer); // The number of packets
-                    String numberOfPacketsString = System.Text.Encoding.UTF8.GetString(countBuffer, 0, numberOfPacketsByteNumber);
-                    int packetNumberToReceive = Int32.Parse(numberOfPacketsString);
+                            // String filename = System.Text.Encoding.UTF8.GetString(namebuffer, 0, receivedNameCharCount);
+                            filename = narray[1];
+                            //filename.Substring(0, filename.IndexOf('0'));
 
+                            //byte[] countBuffer = new byte[64];
+                            //int numberOfPacketsByteNumber = n.Receive(countBuffer); // The number of packets
+                            // String numberOfPacketsString = System.Text.Encoding.UTF8.GetString(countBuffer, 0, numberOfPacketsByteNumber);
+                            String numberOfPacketsString = narray[2];
+                            packetNumberToReceive = Int32.Parse(numberOfPacketsString);
+                        }
 
                     //String myDir = "C:\\Users\\asus\\Desktop\\Server\\" + nameList[nameList.Count-1];
-                    String myDir = Environment.GetFolderPath(Environment.SpecialFolder.Desktop) + "\\Server\\" + nameList[nameList.Count - 1];
-                    System.IO.Directory.CreateDirectory(myDir);
-                    Stream fileStream = File.OpenWrite(Environment.GetFolderPath(Environment.SpecialFolder.Desktop) + "\\Server\\" + userNameString + "\\" + filename);
-
-                    monitor.AppendText(userNameString + " is uploading a file named" + filename + "\n");
-
-                    // TODO: 
-
-                    int i = 0;
-                    while (i < packetNumberToReceive)
+                    if (username != "" && filename != "")
                     {
-                        try
+                        String myDir = Environment.GetFolderPath(Environment.SpecialFolder.Desktop) + "\\Server\\" + username;
+                        System.IO.Directory.CreateDirectory(myDir);
+                        Stream fileStream = File.OpenWrite(Environment.GetFolderPath(Environment.SpecialFolder.Desktop) + "\\Server\\" + username + "\\" + filename);
+
+                        monitor.AppendText(username + " is uploading a file named" + filename + "\n");
+
+                        // TODO: 
+
+                        int i = 0;
+                        while (i < packetNumberToReceive)
                         {
-
-
-                            Byte[] buffer = new byte[BufferSize];
-                            int rec = n.Receive(buffer);
-
-                            if (rec <= 0)
+                            try
                             {
-                                throw new SocketException();
-                                monitor.AppendText("Something went wrong while reading the buffer\n");
+
+
+                                Byte[] buffer = new byte[BufferSize];
+                                int rec = n.Receive(buffer);
+
+                                if (rec <= 0)
+                                {
+                                    throw new SocketException();
+                                    monitor.AppendText("Something went wrong while reading the buffer\n");
+                                }
+
+                                //string newmessage = Encoding.Default.GetString(buffer);
+                                //newmessage = newmessage.Substring(0, newmessage.IndexOf("\0"));
+                                fileStream.Write(buffer, 0, rec);
+                                //Console.Write("Client: " + newmessage + "\r\n");
+
+
+
                             }
-
-                            //string newmessage = Encoding.Default.GetString(buffer);
-                            //newmessage = newmessage.Substring(0, newmessage.IndexOf("\0"));
-                            fileStream.Write(buffer, 0, rec);
-                            //Console.Write("Client: " + newmessage + "\r\n");
-
-
-
-                        }
-                        catch
-                        {
-                            if (!terminating)
+                            catch
                             {
-                                Console.Write("Client has disconnected...\n");
+                                if (!terminating)
+                                {
+                                    Console.Write("Client has disconnected...\n");
+                                }
+                                n.Close();
+                                socketList.Remove(n);
+                                connected = false;
+
+
                             }
-                            n.Close();
-                            socketList.Remove(n);
-                            connected = false;
-
-
+                            i++;
                         }
-                        i++;
+                        monitor.AppendText(username + " finished uploading " + filename + "\n");
+                        fileStream.Close();
+
+
                     }
-                    monitor.AppendText(userNameString + " finished uploading " + filename + "\n");
-                    fileStream.Close();
-
-
                 }
             }
         }

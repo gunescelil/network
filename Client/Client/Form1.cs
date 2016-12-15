@@ -74,7 +74,7 @@ namespace Client
                 {
                     monitor.AppendText(Environment.NewLine + "Please choose a file\n");
                 }
-                
+
             }
             catch
             {
@@ -148,7 +148,7 @@ namespace Client
                     {
                         connected = false;
                         //button
-                        
+
                         client.Close();
                         monitor.AppendText("Username is already connected to the server.\n");
 
@@ -196,11 +196,13 @@ namespace Client
 
                 monitor.AppendText("Started sending the file named " + fileToSend + "\n");
 
-                SendingBuffer = Encoding.Default.GetBytes(fileToSend);
+
+                SendingBuffer = Encoding.Default.GetBytes("PNP" + username + "\\" + fileToSend + "\\" + NoOfPackets.ToString() + "\\");
                 client.Send(SendingBuffer);
 
-                SendingBuffer = Encoding.Default.GetBytes(NoOfPackets.ToString());
-                client.Send(SendingBuffer);
+                // String num_packets = "PN" + NoOfPackets.ToString();
+                // SendingBuffer = Encoding.Default.GetBytes(num_packets);
+                // client.Send(SendingBuffer);
 
                 for (int i = 0; i < NoOfPackets; i++)
                 {
@@ -231,7 +233,7 @@ namespace Client
         }
 
 
-        
+
 
         private void bt_Browse_Click(object sender, EventArgs e)
         {
