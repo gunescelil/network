@@ -14,6 +14,7 @@ using System.Threading;
 
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using UserNamespace;
 
 namespace Server
 {
@@ -32,11 +33,14 @@ namespace Server
         Thread thrMessage;
 
         public static RichTextBox monitor;
-
+        
         static Socket server = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
         static List<Socket> socketList = new List<Socket>();
         static List<string> nameList = new List<string>();
+        static List<User> userList = new List<User>();
         Button serveringButton;
+
+        
 
         public static string userNameString;
         public Form1()
@@ -85,28 +89,29 @@ namespace Server
                 try
                 {
                     possibleClient = server.Accept();
-                    if (TakeUserNameExists(possibleClient))
+                    /*if (TakeUserNameExists(possibleClient))
                     {
-                        byte[] buffer = Encoding.ASCII.GetBytes("usernameExists");
+                        byte[] buffer = Encoding.ASCII.GetBytes("usno");
                         possibleClient.Send(buffer);
                         possibleClient.Close();
                     }
                     else
                     {
-                        byte[] buffer = Encoding.ASCII.GetBytes("Welcome");
+                        byte[] buffer = Encoding.ASCII.GetBytes("welc");
                         possibleClient.Send(buffer);
 
-                        Thread thrReceive;
-                        thrReceive = new Thread(new ThreadStart(Receive));
-                        thrReceive.Start();
+                       // Thread thrReceive;
+                        //thrReceive = new Thread(new ThreadStart(Receive));
+                        //thrReceive.Start();
 
                         int managedThreadId = Thread.CurrentThread.ManagedThreadId;
                         Console.WriteLine("ManagedThreadId = " + managedThreadId);
-                        monitor.AppendText("ManagedThreadId = " + managedThreadId);
-                        //Thread thrMessage;
-                        //thrMessage = new Thread(new ThreadStart(ReceiveMessage));
-                        //thrMessage.Start();
-                    }
+                        monitor.AppendText("ManagedThreadId = " + managedThreadId);*/
+                        Thread thrMessage;
+                        //thrMessage = new Thread(new ThreadStart( ReceiveMessage ));                
+                        thrMessage = new Thread(() => ReceiveMessage(possibleClient));
+                        thrMessage.Start();
+                    //}
                 }
                 catch
                 {
@@ -143,20 +148,54 @@ namespace Server
             return false;
         }
 
+        public User getUser(Socket s)
+        {
+            for(int i = 0; i< userList.Count; i++)
+            {
+                if (s == userList[i].getSocket())
+                {
+                    return userList[i];
+                }
+            }
+            return null;
+        }
+
+        public bool checkUserNameExists(User u)
+        {
+            bool result = false;
+            for(int i =0; i< userList.Count;i++)
+            {
+                if (userList[i].getUserName().Equals(u.getUserName()))
+                    result = true;
+            }
+            return result;
+        }
+
+
         /* This function is to receive text messages from client.
          * But it is not used and implemented
          * */
-        static private void ReceiveMessage()
+        private void ReceiveMessage(Socket s)
         {
             bool connected = true;
-            Socket n = socketList[socketList.Count - 1];
+            Socket n = s;
+            
+            byte[] namebuffer = new byte[64];
+            int receivedNameCharCount = n.Receive(namebuffer);
+            String firstMessageFromClient = Encoding.Default.GetString(namebuffer);
+            firstMessageFromClient = firstMessageFromClient.Substring(0, firstMessageFromClient.IndexOf("\0"));
 
+            User possibleUser = new User("", n);
+            handleMessage(firstMessageFromClient, possibleUser);
+            
+            User currentUser = possibleUser;
+            
             while (connected)
             {
                 try
                 {
-                    Byte[] buffer = new byte[64];
-                    int rec = n.Receive(buffer);
+                    Byte[] buffer = new byte[4];
+                    int rec = currentUser.getSocket().Receive(buffer);
 
                     if (rec <= 0)
                     {
@@ -164,7 +203,9 @@ namespace Server
                     }
 
                     string newmessage = Encoding.Default.GetString(buffer);
-                    newmessage = newmessage.Substring(0, newmessage.IndexOf("\0"));
+                    //newmessage = newmessage.Substring(0, newmessage.IndexOf("\0"));
+                    handleMessage(newmessage, currentUser);
+
                     Console.Write("Client: " + newmessage + "\r\n");
                 }
                 catch
@@ -178,6 +219,191 @@ namespace Server
             }
 
         }
+
+        public string receiveFileName(User u)
+        {
+            Socket s = u.getSocket();
+            byte[] fileNameArray = new byte[64];
+            int receivedCount = s.Receive(fileNameArray);
+            String fileName = System.Text.Encoding.UTF8.GetString(fileNameArray, 0, receivedCount);
+            return fileName;
+        }
+
+        public void receiveUserName(User u)
+        {
+            byte[] namebuffer= new byte[64];
+            int receivedNameCharCount = u.getSocket().Receive(namebuffer);
+            String possibleUserName = Encoding.Default.GetString(namebuffer,0, receivedNameCharCount);
+            u.setUserName(possibleUserName);
+           
+            if (checkUserNameExists(u)) // User name exists
+            {
+                byte[] buffer = Encoding.ASCII.GetBytes("usno");
+                monitor.AppendText("A client named " + u.getUserName() + " is rejected to connect \n");
+                u.getSocket().Send(buffer);
+                u.getSocket().Close();
+                
+            }
+            else if (!checkUserNameExists(u)) // User name does not exist
+            {
+                byte[] buffer = Encoding.ASCII.GetBytes("welc");
+                monitor.AppendText("A client named " + u.getUserName() + " is connected \n");
+                u.getSocket().Send(buffer);
+                userList.Add(u);
+                socketList.Add(u.getSocket());
+                nameList.Add(u.getUserName());
+            }
+        }
+
+
+        public void handleMessage(String message, User u )
+        {
+            message = message.ToLower();
+            switch (message)
+            {
+                case "unme": // Some client is sending the username
+                    sendMessage("unok",u);
+                    break;
+
+                
+                case "unam":
+                    receiveUserName(u);
+                    break;
+
+                case "down": // request to download
+                    break;
+                case "rnme": // request to rename
+                    break;
+                case "dlte": // request to delete
+                    break;
+                case "file": // it will send the file
+                    sendMessage("fiok",u);
+                    break;
+                case "fnme": //  It will send the file name
+                    sendMessage("fnok",u);
+                    String fileName = receiveFileName(u);
+                    u.setFileNameToReceive(fileName);                  
+                    sendMessage("fnco",u);
+                    break;
+                case "pckn":
+                    sendMessage("pcok",u);// ACK to understand packet numbers
+                    int packetNumber = receivePacketNumber(u);
+                    u.setPacketNumber(packetNumber);
+                    sendMessage("pcco",u);
+                    break;
+
+                case "data":
+                    sendMessage("daok",u);
+                    receiveFileData(u);
+                    break;
+
+
+                case "list": // requested the list of files
+                    sendMessage("liok", u);                    
+                    
+                    break;
+                case "lico":
+                    String username = u.getUserName();
+                    monitor.AppendText(username);
+                    String[] fileArray = Directory.GetFiles(Environment.GetFolderPath(Environment.SpecialFolder.Desktop) + "\\Server\\" + username);
+                    StringBuilder sb = new StringBuilder();
+                    for(int i = 0; i < fileArray.Length ;i++)
+                    {
+                        String[] temp = fileArray[i].Split('\\');
+                        sb.Append( temp[temp.Length -1 ] + "*");
+                    }
+                    byte[] bytes = Encoding.Default.GetBytes(sb.ToString());
+
+                    //byte[] bytes = fileArray.Select(str => Convert.ToByte(str)).ToArray();                  
+                    u.getSocket().Send(bytes);
+                    break;
+
+
+
+            }
+
+
+        }
+
+
+        public int receivePacketNumber(User u)
+        {
+            Socket s = u.getSocket();
+            byte[] countBuffer = new byte[64];
+            int numberOfPacketsByteNumber = s.Receive(countBuffer); // The number of packets
+            String numberOfPacketsString = System.Text.Encoding.UTF8.GetString(countBuffer, 0, numberOfPacketsByteNumber);
+        
+            int packetNumberToReceive = Int32.Parse(numberOfPacketsString);
+            return packetNumberToReceive;
+        }
+
+
+        public void receiveFileData(User u)
+        {
+            String username = u.getUserName();
+            String filename = u.getFileNameToReceive();
+            int packetNumber = u.getPacketNumber();
+            Socket s = u.getSocket();
+            String myDir = Environment.GetFolderPath(Environment.SpecialFolder.Desktop) + "\\Server\\" + username;
+            System.IO.Directory.CreateDirectory(myDir);
+            Stream fileStream = File.OpenWrite(Environment.GetFolderPath(Environment.SpecialFolder.Desktop) + "\\Server\\" + username + "\\" + filename);
+            monitor.AppendText(username + " is uploading a file named" + filename + "\n");
+
+            for (int i = 0; i < packetNumber; i++)
+            {
+                try
+                {
+                    Byte[] buffer = new byte[BufferSize];
+                    int rec = s.Receive(buffer);
+
+                    if (rec <= 0)
+                    {
+                        throw new SocketException();
+                        monitor.AppendText("Something went wrong while reading the buffer\n");
+                    }
+
+                    //string newmessage = Encoding.Default.GetString(buffer);
+                    //newmessage = newmessage.Substring(0, newmessage.IndexOf("\0"));
+                    fileStream.Write(buffer, 0, rec);
+                    //Console.Write("Client: " + newmessage + "\r\n");
+                }
+                catch
+                {
+                    if (!terminating)
+                    {
+                        Console.Write("Client has disconnected...\n");
+                    }
+                    s.Close(); socketList.Remove(s); userList.Remove(u); nameList.Remove(username);
+                }
+
+            }
+            monitor.AppendText(username + " finished uploading " + filename + "\n");
+            fileStream.Close();
+        }      
+
+
+            
+
+        static public void sendMessage(String message, User u)
+        {
+            byte[] buffer = Encoding.Default.GetBytes(message);
+            u.getSocket().Send(buffer);          
+        }
+
+        static public String getUserName(Socket socket)
+        {
+            String result = "";
+            for(int i=0; i< userList.Count; i++)
+            {
+                if(socket == userList[i].getSocket() )
+                {
+                    result = userList[i].getUserName();
+                }
+            }
+            return result;
+        }
+
+        
 
 
 

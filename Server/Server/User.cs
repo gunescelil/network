@@ -7,11 +7,18 @@ namespace UserNamespace {
     {
         String username;
         Socket socket;
+        int  NumberOfPacketsToReceive;
+        String fileNameToReceive;
 
         public User(String u, Socket s)
         {
             username = u;
             socket = s;
+        }
+
+        public void setUserName(String s)
+        {
+            username = s;
         }
 
         public string getUserName()
@@ -23,6 +30,27 @@ namespace UserNamespace {
         {
             return socket;
         }
+
+        public void setPacketNumber(int i)
+        {
+            NumberOfPacketsToReceive = i;
+        }
+
+        public int getPacketNumber()
+        {
+            return NumberOfPacketsToReceive;
+        }
+
+        public void setFileNameToReceive(String s)
+        {
+            fileNameToReceive = s;
+        }
+        
+        public String getFileNameToReceive()
+        {
+            return fileNameToReceive;
+        }
+
     }
 
 

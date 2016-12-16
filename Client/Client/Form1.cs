@@ -31,9 +31,12 @@ namespace Client
         Button connectButton, disconnectButton;
         TextBox PortNumber;
         TextBox IP;
+        String fileToSend;
 
+        int NoOfPackets;
 
         Thread thrReceive;
+        Thread thrMessage;
 
         public Form1()
         {
@@ -52,10 +55,7 @@ namespace Client
         static void SendMessage(string message)
         {
             byte[] buffer = Encoding.Default.GetBytes(message);
-
-            //we can send a byte[] 
             client.Send(buffer);
-            //Console.Write("Your message has been sent.\n");
         }
 
         private void bt_SendFile_Click(object sender, EventArgs e)
@@ -68,7 +68,8 @@ namespace Client
                 {
                     String[] filePathArray = fileName.Split('\\');
                     monitor.AppendText("Trying to send the file named " + filePathArray[filePathArray.Length - 1] + "\n");
-                    SendFile(fileName);
+                    //SendFile(fileName);
+                    SendFile();
                 }
                 else
                 {
@@ -86,6 +87,12 @@ namespace Client
 
 
 
+        }
+
+        private void SendFile()
+        {
+            SendMessage("file");            
+            handleMessage();
         }
 
         private void connectBtn_Click(object sender, EventArgs e)
@@ -112,9 +119,36 @@ namespace Client
             }
 
 
-            thrReceive = new Thread(new ThreadStart(Receive));
-            thrReceive.Start();
+
+
+            //thrReceive = new Thread(new ThreadStart(Receive));
+            //thrReceive.Start();
+
+            SendMessage("unme");
+            handleMessage();
+
             username = nameUserTb.Text;
+            byte[] bufferName = Encoding.Default.GetBytes(username);
+            client.Send(bufferName);
+
+
+            thrMessage = new Thread(new ThreadStart(receiveMessage));
+            thrMessage.Start();
+
+        }
+
+
+        private void receiveMessage()
+        {
+            bool connected = true;
+            while (connected)
+            {
+                handleMessage();
+            }
+        }
+
+        static private void receiveFile()
+        {
 
         }
 
@@ -246,6 +280,164 @@ namespace Client
             {
                 tb_File.Text = Dlg.FileName;
             }
+        }
+
+        private void btn_RequestFiles_Click(object sender, EventArgs e)
+        {
+            SendMessage("list");           
+        }
+
+         public void handleMessage()
+        {
+            byte[] response = new byte[4];
+            client.Receive(response);
+            string message = Encoding.Default.GetString(response);
+
+            message = message.ToLower();
+            switch(message)
+            {
+                case "liok": // The server is sending the file list
+                    SendMessage("lico");
+                    receiveFileList();
+                    break;
+                case "welc":
+                    monitor.AppendText("Connected to server\n");
+                    break;
+
+                case "unok":
+                    monitor.AppendText("Server wants my name\n");
+                    SendMessage("unam"); // now sending the real user name
+                    break;
+                case "usno":
+                    //button
+                    client.Close();
+                    monitor.AppendText("Username is already connected to the server.\n");
+                    break;
+                case "down": // send request to download the file
+                    break;
+                case "rnme": // send request to rename the file
+                    break;
+                case "dlte": // send request to delete the file
+                    break;
+                case "fiok": // Server send ack to receive data 
+                    SendMessage("fnme"); // Send info to of sending file name
+                    handleMessage();
+                    sendFileName();
+                    handleMessage(); // Wait ack message
+                    break ;
+                case "fnok":
+                    sendFileName();
+                    handleMessage();
+                    break;
+                case "fnco":
+                    //SendMessage("data"); // send the real data of the file
+                    SendMessage("pckn");
+                    handleMessage();
+                    //sendNumberOfPackets();
+                    //sendFileData();
+                    //handleMessage();
+                    
+                    break;
+                case "pcok":
+                    sendNumberOfPackets();
+                    handleMessage();
+                    //SendMessage("data");
+                    //handleMessage();
+                    break;
+
+                case "pcco":// Server got number of packets in its hand. Now send the real data
+                    SendMessage("data");
+                    handleMessage();
+                    break;
+
+                case "daok":
+                    SendFile();
+                    break;
+
+
+            }
+        }
+
+        public void sendFileData()
+        {
+            String filePath = tb_File.Text;
+            byte[] SendingBuffer = null;
+            FileStream Fs = new FileStream(filePath, FileMode.Open, FileAccess.Read);
+
+            try
+            {
+                NoOfPackets = Convert.ToInt32(Math.Ceiling(Convert.ToDouble(Fs.Length) / Convert.ToDouble(BufferSize)));
+                int TotalLength = (int)Fs.Length;
+                int CurrentPacketLength;
+
+                String[] nameArray = fileName.Split('\\');
+                String fileToSend = nameArray[nameArray.Length - 1];
+                monitor.AppendText("Started sending the file named " + fileToSend + "\n");
+
+                for (int i = 0; i < NoOfPackets; i++)
+                {
+                    if (TotalLength > BufferSize)
+                    {
+                        CurrentPacketLength = BufferSize;
+                        TotalLength = TotalLength - CurrentPacketLength;
+                    }
+                    else
+                    {
+                        CurrentPacketLength = TotalLength;
+                    }
+
+                    SendingBuffer = new Byte[CurrentPacketLength];
+                    Fs.Read(SendingBuffer, 0, CurrentPacketLength);
+                    client.Send(SendingBuffer);
+                }
+                monitor.AppendText("Sent the file named " + fileToSend + "\n");
+                Fs.Close();
+            }
+            catch
+            {
+
+            }
+        }
+
+        private void sendNumberOfPackets()
+        {
+            String filePath = tb_File.Text;
+            byte[] SendingBuffer = null;
+            FileStream Fs = new FileStream(filePath, FileMode.Open, FileAccess.Read);
+            NoOfPackets = Convert.ToInt32(Math.Ceiling(Convert.ToDouble(Fs.Length) / Convert.ToDouble(BufferSize)));
+
+            String num_packets = NoOfPackets.ToString();
+            SendingBuffer = Encoding.Default.GetBytes(num_packets);
+            client.Send(SendingBuffer);
+
+        }
+
+        private  void sendFileName()
+        {
+            String[] nameArray = fileName.Split('\\');
+            fileToSend = nameArray[nameArray.Length - 1];
+
+            monitor.AppendText("Started sending the file named " + fileToSend + "\n");
+            
+            byte [] SendingBuffer = Encoding.Default.GetBytes(fileToSend);
+            client.Send(SendingBuffer);
+        }
+
+        static public void receiveFileList()
+        {
+            byte[] buffer = new byte[20000];
+            int receivedSize = client.Receive(buffer);// the buffer has now the byte array of string array
+
+            
+            String s = Encoding.Default.GetString(buffer, 0, receivedSize);
+            String[] files = s.Split('*');
+            monitor.AppendText("Your files are below\n");
+            foreach(string str in files)
+            {
+                monitor.AppendText(str + "\n");
+            }
+
+            
         }
 
         private void btn_Disconnect_Click(object sender, EventArgs e)
