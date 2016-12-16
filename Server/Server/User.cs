@@ -9,6 +9,7 @@ namespace UserNamespace {
         Socket socket;
         int  NumberOfPacketsToReceive;
         String fileNameToReceive;
+        String fileNameForDownload;
 
         public User(String u, Socket s)
         {
@@ -50,6 +51,18 @@ namespace UserNamespace {
         {
             return fileNameToReceive;
         }
+
+        public String getFileNameForDownload()
+        {
+            return fileNameForDownload;
+        }
+
+        public void setFileNameForDownload(String s)
+        {
+            fileNameForDownload = s;
+        }
+
+
 
     }
 

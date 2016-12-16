@@ -31,9 +31,15 @@ namespace Client
         Button connectButton, disconnectButton;
         TextBox PortNumber;
         TextBox IP;
+        TextBox oldFile_tb;
+        TextBox newFile_tb;
+        TextBox deleteFile_tb;
+        TextBox downloadFile_tb;
+
         String fileToSend;
 
         int NoOfPackets;
+        int NoOfPacketsDownload;
 
         Thread thrReceive;
         Thread thrMessage;
@@ -49,6 +55,11 @@ namespace Client
             disconnectButton = (Button)btn_Disconnect;
             PortNumber = (TextBox)tb_ServerPort;
             IP = (TextBox)tb_ServerIp;
+            oldFile_tb = (TextBox)tb_OldFileName;
+            newFile_tb = (TextBox)tb_NewFileName;
+            downloadFile_tb = (TextBox)tb_FileToDownload;
+            deleteFile_tb = (TextBox)tb_FileToDelete;
+
 
         }
 
@@ -315,8 +326,7 @@ namespace Client
                     break;
                 case "down": // send request to download the file
                     break;
-                case "rnme": // send request to rename the file
-                    break;
+                
                 case "dlte": // send request to delete the file
                     break;
                 case "fiok": // Server send ack to receive data 
@@ -352,10 +362,127 @@ namespace Client
 
                 case "daok":
                     SendFile();
+                    handleMessage();
+                    break;
+
+                case "chok": // server ACK
+                    sendFileNamesToRename();
+                    break;
+
+                case "deok":
+                    sendFileNameToDelete();
+                    break;
+                case "dook":
+                    SendMessage("doco");
+                   
+                    break;
+                case "refn":
+                    sendFileNameToDownload();
+                    break;
+                case "dcom":
+                    SendMessage("dcok");
+                    
+                        break;
+                case "pckn": // packet numarasını alıyorum diyoruz
+                    SendMessage("nuok");
+                    NoOfPacketsDownload = rececivePacketNumber();
+                    SendMessage("nudo");
+                    break;
+                case "fida":
+                    SendMessage("fdok"); // anladım diyorum
+                    downloadFileData();
+                    //SendMessage("fcom");
                     break;
 
 
+
             }
+        }
+
+        public int rececivePacketNumber()
+        {
+            //Socket s = u.getSocket();
+            byte[] countBuffer = new byte[64];
+            int numberOfPacketsByteNumber = client.Receive(countBuffer); // The number of packets
+            String numberOfPacketsString = Encoding.Default.GetString(countBuffer, 0, numberOfPacketsByteNumber);
+
+            int packetNumberToReceive = Int32.Parse(numberOfPacketsString);
+            return packetNumberToReceive;
+        }
+        
+
+
+        public void downloadFileData()
+        {
+
+            int packetNumber = NoOfPacketsDownload;
+            String myDir = Environment.GetFolderPath(Environment.SpecialFolder.Desktop) + "\\" + username;
+            System.IO.Directory.CreateDirectory(myDir);
+            Stream fileStream = File.OpenWrite(Environment.GetFolderPath(Environment.SpecialFolder.Desktop) + "\\"+username + "\\" + downloadFile_tb.Text);
+            monitor.AppendText(username + " is uploading a file named" + downloadFile_tb.Text + "\n");
+
+            for (int i = 0; i < packetNumber; i++)
+            {
+                try
+                {
+                    Byte[] buffer = new byte[BufferSize];
+                    int rec = client.Receive(buffer);
+
+                    if (rec <= 0)
+                    {
+                        throw new SocketException();
+                        monitor.AppendText("Something went wrong while reading the buffer\n");
+                    }
+
+                    //string newmessage = Encoding.Default.GetString(buffer);
+                    //newmessage = newmessage.Substring(0, newmessage.IndexOf("\0"));
+                    fileStream.Write(buffer, 0, rec);
+                    //Console.Write("Client: " + newmessage + "\r\n");
+                }
+                catch
+                {
+                    if (!terminating)
+                    {
+                        Console.Write("Client has disconnected...\n");
+                    }
+                    //client.Close(); 
+                }
+
+            }
+            monitor.AppendText(username + " finished uploading " + downloadFile_tb.Text + "\n");
+            fileStream.Close();
+        }
+
+        private void sendFileNameToDownload()
+        {
+            String fileName = downloadFile_tb.Text;
+            
+
+            monitor.AppendText("Requested the file named " + fileName + "\n");
+
+            byte[] SendingBuffer = Encoding.Default.GetBytes(fileName);
+            client.Send(SendingBuffer);
+        }
+
+
+        public void sendFileNameToDelete()
+        {
+            String deleteFile = deleteFile_tb.Text;
+            byte[] SendingBuffer = Encoding.Default.GetBytes(deleteFile);
+            client.Send(SendingBuffer);
+        }
+
+        private void sendFileNamesToRename()
+        {
+            String oldFile = oldFile_tb.Text;
+            String newFile = newFile_tb.Text;
+            StringBuilder sb = new StringBuilder();
+            sb.Append(oldFile + "*"+ newFile);
+            
+            monitor.AppendText("Started renaming the file named " + oldFile +" to " + newFile +"\n");
+
+            byte[] SendingBuffer = Encoding.Default.GetBytes(sb.ToString());
+            client.Send(SendingBuffer);
         }
 
         public void sendFileData()
@@ -438,6 +565,22 @@ namespace Client
             }
 
             
+        }
+
+        private void btn_ChangeFileName_Click(object sender, EventArgs e)
+        {
+            
+            SendMessage("chan");
+        }
+
+        private void btn_Delete_Click(object sender, EventArgs e)
+        {
+            SendMessage("dlte");
+        }
+
+        private void btn_Download_Click(object sender, EventArgs e)
+        {
+            SendMessage("down");
         }
 
         private void btn_Disconnect_Click(object sender, EventArgs e)

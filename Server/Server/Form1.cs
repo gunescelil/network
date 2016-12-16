@@ -270,12 +270,9 @@ namespace Server
                     receiveUserName(u);
                     break;
 
-                case "down": // request to download
-                    break;
-                case "rnme": // request to rename
-                    break;
-                case "dlte": // request to delete
-                    break;
+                
+               
+                
                 case "file": // it will send the file
                     sendMessage("fiok",u);
                     break;
@@ -317,12 +314,154 @@ namespace Server
                     //byte[] bytes = fileArray.Select(str => Convert.ToByte(str)).ToArray();                  
                     u.getSocket().Send(bytes);
                     break;
+                case "chan":
+                    sendMessage("chok", u);
+                    receiveFileNamesForRename(u);
 
+
+                    break;
+                case "dlte": // request to delete
+                    sendMessage("deok", u);
+                    receiveFileNameToDelete(u);
+                    break;
+
+                case "down": // request to download
+                    sendMessage("dook",u);
+                    break;
+                case "doco": // Request the file name from the server
+                    sendMessage("refn",u);
+                    String name = receiveFileName(u);
+                    u.setFileNameForDownload(name);
+                    sendMessage("dcom",u);
+                    break;
+                case "dcok":
+                    sendMessage("pckn", u); // packet numarası göndercem
+                    //sendFileData(u);
+                    break;
+
+                case "nuok": // Packet numberı gönder
+                    sendNumberOfPackets(u);
+                    break;
+                case "nudo": // client packet sayısı aldı.
+                    sendMessage("fida",u); // datayı göndercem diyorum
+                    break;
+
+                case "fdok": // dosyayı gönder dedi client bende gönderiyorum
+                    sendFileData(u);
+                    break;
+                case "fcom":
+                    monitor.AppendText("File is sent to the server");
+                    break;
+                
+                    
 
 
             }
 
 
+        }
+
+        private void sendNumberOfPackets(User u)
+        {
+
+            ////////////////////////
+
+
+            String filePath = Environment.GetFolderPath(Environment.SpecialFolder.Desktop) + "\\Server\\" + u.getUserName() + "\\" + u.getFileNameForDownload();
+            byte[] SendingBuffer = null;
+            FileStream Fs = new FileStream(filePath, FileMode.Open, FileAccess.Read);
+            int x =  Convert.ToInt32(Math.Ceiling(Convert.ToDouble(Fs.Length) / Convert.ToDouble(BufferSize)));
+            monitor.AppendText("packet number is: " + x);
+
+            String num_packets = x.ToString();
+            SendingBuffer = Encoding.Default.GetBytes(num_packets);
+            u.getSocket().Send(SendingBuffer);
+            Fs.Close();
+        }
+
+        public void sendFileData(User u)
+        {
+
+            String filePath = Environment.GetFolderPath(Environment.SpecialFolder.Desktop) + "\\Server\\" + u.getUserName() + "\\" + u.getFileNameToReceive();
+            
+            byte[] SendingBuffer = null;
+            FileStream Fs = new FileStream(filePath, FileMode.Open, FileAccess.Read);
+
+            try
+            {
+                int NoOfPackets = Convert.ToInt32(Math.Ceiling(Convert.ToDouble(Fs.Length) / Convert.ToDouble(BufferSize)));
+                int TotalLength = (int)Fs.Length;
+                int CurrentPacketLength;
+
+                String[] nameArray = filePath.Split('\\');
+                String fileToSend = nameArray[nameArray.Length - 1];
+                monitor.AppendText("Started sending the file named " + fileToSend + "\n");
+
+                for (int i = 0; i < u.getPacketNumber(); i++)
+                {
+                    if (TotalLength > BufferSize)
+                    {
+                        CurrentPacketLength = BufferSize;
+                        TotalLength = TotalLength - CurrentPacketLength;
+                    }
+                    else
+                    {
+                        CurrentPacketLength = TotalLength;
+                    }
+
+                    SendingBuffer = new Byte[CurrentPacketLength];
+                    Fs.Read(SendingBuffer, 0, CurrentPacketLength);
+                    u.getSocket().Send(SendingBuffer);
+                }
+                monitor.AppendText("Sent the file named " + fileToSend + "\n");
+                Fs.Close();
+            }
+            catch
+            {
+
+            }
+
+        }
+
+        public void sendFileToClient(User u)
+        {
+
+        }
+
+
+
+        public void receiveFileNameToDelete(User u)
+        {
+            Socket s = u.getSocket();
+            byte[] buffer = new byte[200];
+            int receivedNum = s.Receive(buffer);
+            String file = System.Text.Encoding.UTF8.GetString(buffer, 0, receivedNum);
+            String filePath = Environment.GetFolderPath(Environment.SpecialFolder.Desktop) + "\\Server\\" + u.getUserName() + "\\" + file;
+
+            System.IO.File.Delete(filePath);
+            monitor.AppendText("Deleted the file named " + file + " \n");
+
+        }
+
+
+        public void receiveFileNamesForRename(User u)
+        {
+
+            Socket s = u.getSocket();
+            byte[] buffer = new byte[200];
+            int receivedNum = s.Receive(buffer);
+            String twofiles = System.Text.Encoding.UTF8.GetString(buffer, 0, receivedNum);
+
+            String usersDirectory = Environment.GetFolderPath(Environment.SpecialFolder.Desktop) + "\\Server\\" + u.getUserName();
+            String[] files = twofiles.Split('*');
+            String oldFile = files[0];
+            String newFile = files[1];
+
+
+
+
+            System.IO.File.Move(usersDirectory+"\\"+ oldFile, usersDirectory + "\\" + newFile);
+            monitor.AppendText("Renamed the file named " + oldFile + " to " + newFile + "\n");
         }
 
 

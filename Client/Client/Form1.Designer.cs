@@ -198,6 +198,7 @@
             this.btn_Download.TabIndex = 15;
             this.btn_Download.Text = "Download";
             this.btn_Download.UseVisualStyleBackColor = true;
+            this.btn_Download.Click += new System.EventHandler(this.btn_Download_Click);
             // 
             // btn_ChangeFileName
             // 
@@ -207,6 +208,7 @@
             this.btn_ChangeFileName.TabIndex = 16;
             this.btn_ChangeFileName.Text = "Change File Name";
             this.btn_ChangeFileName.UseVisualStyleBackColor = true;
+            this.btn_ChangeFileName.Click += new System.EventHandler(this.btn_ChangeFileName_Click);
             // 
             // btn_Delete
             // 
@@ -216,6 +218,7 @@
             this.btn_Delete.TabIndex = 17;
             this.btn_Delete.Text = "Delete File";
             this.btn_Delete.UseVisualStyleBackColor = true;
+            this.btn_Delete.Click += new System.EventHandler(this.btn_Delete_Click);
             // 
             // tb_OldFileName
             // 
