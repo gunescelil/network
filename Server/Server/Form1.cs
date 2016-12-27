@@ -263,22 +263,18 @@ namespace Server
             {
                 case "unme": // Some client is sending the username
                     sendMessage("unok",u);
-                    break;
-
-                
+                    break;               
                 case "unam":
                     receiveUserName(u);
                     break;
-
-                
                
-                
-                case "file": // it will send the file
+                case "file": // client will send the file
                     sendMessage("fiok",u);
                     break;
-                case "fnme": //  It will send the file name
+                case "fnme": //  client will send the file name
                     sendMessage("fnok",u);
                     String fileName = receiveFileName(u);
+                    monitor.AppendText("User " + u.getUserName() + " is sending a file named " + fileName + "\n");
                     u.setFileNameToReceive(fileName);                  
                     sendMessage("fnco",u);
                     break;
@@ -292,6 +288,7 @@ namespace Server
                 case "data":
                     sendMessage("daok",u);
                     receiveFileData(u);
+                    sendMessage("dafi",u);
                     break;
 
 
@@ -382,7 +379,7 @@ namespace Server
         public void sendFileData(User u)
         {
 
-            String filePath = Environment.GetFolderPath(Environment.SpecialFolder.Desktop) + "\\Server\\" + u.getUserName() + "\\" + u.getFileNameToReceive();
+            String filePath = Environment.GetFolderPath(Environment.SpecialFolder.Desktop) + "\\Server\\" + u.getUserName() + "\\" + u.getFileNameForDownload();
             
             byte[] SendingBuffer = null;
             FileStream Fs = new FileStream(filePath, FileMode.Open, FileAccess.Read);

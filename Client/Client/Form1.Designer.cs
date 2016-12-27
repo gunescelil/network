@@ -65,6 +65,7 @@
             this.tb_ServerIp.Name = "tb_ServerIp";
             this.tb_ServerIp.Size = new System.Drawing.Size(298, 22);
             this.tb_ServerIp.TabIndex = 0;
+            this.tb_ServerIp.Text = "127.0.0.1";
             // 
             // tb_ServerPort
             // 

@@ -35,6 +35,11 @@ namespace Client
         TextBox newFile_tb;
         TextBox deleteFile_tb;
         TextBox downloadFile_tb;
+        private FolderBrowserDialog folderBrowserDialog1;
+        private string chosenDownloadFolder;
+        private OpenFileDialog openFileDialog1;
+
+        String fileToReceive;
 
         String fileToSend;
 
@@ -103,7 +108,6 @@ namespace Client
         private void SendFile()
         {
             SendMessage("file");            
-            handleMessage();
         }
 
         private void connectBtn_Click(object sender, EventArgs e)
@@ -277,6 +281,7 @@ namespace Client
 
         }
 
+       
 
 
 
@@ -330,39 +335,33 @@ namespace Client
                 case "dlte": // send request to delete the file
                     break;
                 case "fiok": // Server send ack to receive data 
-                    SendMessage("fnme"); // Send info to of sending file name
-                    handleMessage();
-                    sendFileName();
-                    handleMessage(); // Wait ack message
+                    SendMessage("fnme"); // Send info about sending file name
+                    
                     break ;
                 case "fnok":
                     sendFileName();
-                    handleMessage();
+
                     break;
                 case "fnco":
                     //SendMessage("data"); // send the real data of the file
                     SendMessage("pckn");
-                    handleMessage();
-                    //sendNumberOfPackets();
-                    //sendFileData();
-                    //handleMessage();
+                   
                     
                     break;
                 case "pcok":
                     sendNumberOfPackets();
-                    handleMessage();
-                    //SendMessage("data");
-                    //handleMessage();
+
                     break;
 
                 case "pcco":// Server got number of packets in its hand. Now send the real data
                     SendMessage("data");
-                    handleMessage();
                     break;
 
                 case "daok":
-                    SendFile();
-                    handleMessage();
+                    sendFileData();
+                    break;
+                case "dafi":
+                    monitor.AppendText("File is sent succeccfully");
                     break;
 
                 case "chok": // server ACK
@@ -416,10 +415,10 @@ namespace Client
         {
 
             int packetNumber = NoOfPacketsDownload;
-            String myDir = Environment.GetFolderPath(Environment.SpecialFolder.Desktop) + "\\" + username;
+            String myDir = chosenDownloadFolder + "\\" + username;
             System.IO.Directory.CreateDirectory(myDir);
-            Stream fileStream = File.OpenWrite(Environment.GetFolderPath(Environment.SpecialFolder.Desktop) + "\\"+username + "\\" + downloadFile_tb.Text);
-            monitor.AppendText(username + " is uploading a file named" + downloadFile_tb.Text + "\n");
+            Stream fileStream = File.OpenWrite(chosenDownloadFolder + "\\" + fileToReceive);
+            monitor.AppendText(username + " is uploading a file named" + fileToReceive + "\n");
 
             for (int i = 0; i < packetNumber; i++)
             {
@@ -580,7 +579,18 @@ namespace Client
 
         private void btn_Download_Click(object sender, EventArgs e)
         {
-            SendMessage("down");
+            if(!tb_FileToDownload.Text.Equals(""))
+            {
+                FolderBrowserDialog fbd = new FolderBrowserDialog();
+                DialogResult result = fbd.ShowDialog();
+                if (!string.IsNullOrWhiteSpace(fbd.SelectedPath))
+                {
+                    chosenDownloadFolder = fbd.SelectedPath;
+                }
+
+                fileToReceive = downloadFile_tb.Text;
+                SendMessage("down");
+            }          
         }
 
         private void btn_Disconnect_Click(object sender, EventArgs e)
