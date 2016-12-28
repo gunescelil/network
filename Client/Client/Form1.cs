@@ -10,7 +10,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using System.Threading;
-
+using System.Text.RegularExpressions;
 
 namespace Client
 {
@@ -40,7 +40,6 @@ namespace Client
         private OpenFileDialog openFileDialog1;
 
         String fileToReceive;
-
         String fileToSend;
 
         int NoOfPackets;
@@ -48,6 +47,8 @@ namespace Client
 
         Thread thrReceive;
         Thread thrMessage;
+
+        bool connected;
 
         public Form1()
         {
@@ -83,27 +84,17 @@ namespace Client
                 if (fileName != "")
                 {
                     String[] filePathArray = fileName.Split('\\');
-                    monitor.AppendText("Trying to send the file named " + filePathArray[filePathArray.Length - 1] + "\n");
-                    //SendFile(fileName);
                     SendFile();
                 }
                 else
                 {
                     monitor.AppendText(Environment.NewLine + "Please choose a file\n");
                 }
-
             }
             catch
             {
-
-                //monitor.AppendText("Cannot connected to the specified server\n");
-                //monitor.AppendText("terminating...\n");
-
             }
-
-
-
-        }
+}
 
         private void SendFile()
         {
@@ -112,179 +103,75 @@ namespace Client
 
         private void connectBtn_Click(object sender, EventArgs e)
         {
-            //this port will be used by clients to connect
-            client = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
-            serverPort = Convert.ToInt32(PortNumber.Text);
-
-            // Changing UI
-            connectButton.Enabled = false;
-            nameUserTb.Enabled = false;
-            PortNumber.Enabled = false;
-            IP.Enabled = false;
-
-
-            serverIP = (IP.Text);
-            try
-            {
-                client.Connect(serverIP, serverPort);
-            }
-            catch
-            {
-                monitor.AppendText("Something went wrong while connecting.\n");
-            }
-
-
-
-
-            //thrReceive = new Thread(new ThreadStart(Receive));
-            //thrReceive.Start();
-
-            SendMessage("unme");
-            handleMessage();
 
             username = nameUserTb.Text;
-            byte[] bufferName = Encoding.Default.GetBytes(username);
-            client.Send(bufferName);
+            Regex regex = new Regex("^([a-z][a-z0-9]+|[a-z]){1,25}$");
+
+            if(regex.IsMatch(username))
+            {
+                //this port will be used by clients to connect
+                client = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
+                serverPort = Convert.ToInt32(PortNumber.Text);
+
+                // Changing UI
+                connectButton.Enabled = false;
+                nameUserTb.Enabled = false;
+                PortNumber.Enabled = false;
+                IP.Enabled = false;
+
+                serverIP = (IP.Text);
+                try
+                {
+                    client.Connect(serverIP, serverPort);
+                }
+                catch
+                {
+                    monitor.AppendText("Something went wrong while connecting.\n");
+                }
+                
+                SendMessage("unme");
+                handleMessage();
 
 
-            thrMessage = new Thread(new ThreadStart(receiveMessage));
-            thrMessage.Start();
+                byte[] bufferName = Encoding.Default.GetBytes(username);
+                client.Send(bufferName);
 
+
+                thrMessage = new Thread(new ThreadStart(receiveMessage));
+                thrMessage.Start();
+            }
+            else
+            {
+                connectButton.Enabled = true;
+                showNotificationBalloon("User name contains invalid characters");                
+            }
+        }
+
+        public void showNotificationBalloon(String message)
+        {
+            var notification = new System.Windows.Forms.NotifyIcon()
+            {
+                Visible = true,
+                Icon = System.Drawing.SystemIcons.Information,
+                BalloonTipText = message,
+            };
+
+            // Display for 3 seconds.
+            notification.ShowBalloonTip(3);
+            notification.Dispose();
         }
 
 
         private void receiveMessage()
         {
-            bool connected = true;
+            connected = true;
             while (connected)
             {
                 handleMessage();
             }
         }
 
-        static private void receiveFile()
-        {
-
-        }
-
-
-        //this function will be used in the thread
-        static private void Receive()
-        {
-            bool connected = true;
-            //Console.WriteLine("Connected to the server.");
-            byte[] bufferName = Encoding.Default.GetBytes(username);
-            client.Send(bufferName);
-
-
-            while (connected)
-            {
-                try
-                {
-                    byte[] buffer = new byte[64];
-
-                    int rec = client.Receive(buffer);
-
-                    if (rec <= 0)
-                    {
-                        throw new SocketException();
-                    }
-
-                    string newmessage = Encoding.Default.GetString(buffer);
-                    newmessage = newmessage.Substring(0, newmessage.IndexOf("\0"));
-
-                    if (newmessage.Equals("usernameExists"))
-                    {
-                        connected = false;
-                        //button
-
-                        client.Close();
-                        monitor.AppendText("Username is already connected to the server.\n");
-
-                    }
-                    else
-                    {
-                        monitor.AppendText("Connected to server\n");
-
-
-                    }
-
-
-                    //Console.Write("Server: " + newmessage + "\r\n");
-                }
-                catch
-                {
-                    if (!terminating)
-                    {
-                        monitor.AppendText("Connection has been terminated...\n");
-                        //Console.Write("Connection has been terminated...\n");
-
-                    }
-                    connected = false;
-
-                }
-            }
-        }
-
-
-        public void SendFile(String path)
-        {
-
-            byte[] SendingBuffer = null;
-            FileStream Fs = new FileStream(path, FileMode.Open, FileAccess.Read);
-            try
-            {
-                int NoOfPackets = Convert.ToInt32(Math.Ceiling(Convert.ToDouble(Fs.Length) / Convert.ToDouble(BufferSize)));
-                int TotalLength = (int)Fs.Length;
-                int CurrentPacketLength;
-                int counter = 0;
-
-
-                String[] nameArray = fileName.Split('\\');
-                String fileToSend = nameArray[nameArray.Length - 1];
-
-                monitor.AppendText("Started sending the file named " + fileToSend + "\n");
-
-
-                SendingBuffer = Encoding.Default.GetBytes("PNP" + username + "\\" + fileToSend + "\\" + NoOfPackets.ToString() + "\\");
-                client.Send(SendingBuffer);
-
-                // String num_packets = "PN" + NoOfPackets.ToString();
-                // SendingBuffer = Encoding.Default.GetBytes(num_packets);
-                // client.Send(SendingBuffer);
-
-                for (int i = 0; i < NoOfPackets; i++)
-                {
-                    if (TotalLength > BufferSize)
-                    {
-                        CurrentPacketLength = BufferSize;
-                        TotalLength = TotalLength - CurrentPacketLength;
-                    }
-                    else
-                    {
-                        CurrentPacketLength = TotalLength;
-                    }
-
-                    SendingBuffer = new Byte[CurrentPacketLength];
-                    Fs.Read(SendingBuffer, 0, CurrentPacketLength);
-                    client.Send(SendingBuffer);
-                }
-
-                monitor.AppendText("Sent the file named " + fileToSend + "\n");
-                Fs.Close();
-
-            }
-            catch
-            {
-
-            }
-
-        }
-
-       
-
-
-
+  
         private void bt_Browse_Click(object sender, EventArgs e)
         {
             OpenFileDialog Dlg = new OpenFileDialog();
@@ -321,22 +208,28 @@ namespace Client
                     break;
 
                 case "unok":
-                    monitor.AppendText("Server wants my name\n");
                     SendMessage("unam"); // now sending the real user name
                     break;
                 case "usno":
                     //button
+                    connected = false;
+                    connectButton.Enabled = true;
+                    nameUserTb.Enabled = true;
+                    PortNumber.Enabled = true;
+                    IP.Enabled = true;
                     client.Close();
                     monitor.AppendText("Username is already connected to the server.\n");
+                    
+
                     break;
                 case "down": // send request to download the file
                     break;
                 
-                case "dlte": // send request to delete the file
+                case "dlco": // deletion of the of the file is okey
+                    monitor.AppendText(tb_FileToDelete.Text + " is deleted\n");
                     break;
                 case "fiok": // Server send ack to receive data 
-                    SendMessage("fnme"); // Send info about sending file name
-                    
+                    SendMessage("fnme"); // Send info about sending file name                    
                     break ;
                 case "fnok":
                     sendFileName();
@@ -361,11 +254,18 @@ namespace Client
                     sendFileData();
                     break;
                 case "dafi":
-                    monitor.AppendText("File is sent succeccfully");
+                    monitor.AppendText("Sent the file named " + fileToSend + "\n");
                     break;
 
                 case "chok": // server ACK
                     sendFileNamesToRename();
+                    break;
+
+                case "fdne" : // file does not exist error message
+                    showNotificationBalloon("File does not exist in the server. Check the file name");
+                    break;
+                case "":
+                    showNotificationBalloon("New file name is invalid\n");
                     break;
 
                 case "deok":
@@ -392,6 +292,15 @@ namespace Client
                     downloadFileData();
                     //SendMessage("fcom");
                     break;
+                case "dsok":
+                    connected = false;
+                    SendMessage("dico");
+                   
+                    break;
+                case "dido":
+                    client.Close();
+                    monitor.AppendText("Disconnected from the server\n");
+                    break;      
 
 
 
@@ -432,11 +341,8 @@ namespace Client
                         throw new SocketException();
                         monitor.AppendText("Something went wrong while reading the buffer\n");
                     }
-
-                    //string newmessage = Encoding.Default.GetString(buffer);
-                    //newmessage = newmessage.Substring(0, newmessage.IndexOf("\0"));
+                    
                     fileStream.Write(buffer, 0, rec);
-                    //Console.Write("Client: " + newmessage + "\r\n");
                 }
                 catch
                 {
@@ -448,7 +354,6 @@ namespace Client
                 }
 
             }
-            monitor.AppendText(username + " finished uploading " + downloadFile_tb.Text + "\n");
             fileStream.Close();
         }
 
@@ -478,8 +383,6 @@ namespace Client
             StringBuilder sb = new StringBuilder();
             sb.Append(oldFile + "*"+ newFile);
             
-            monitor.AppendText("Started renaming the file named " + oldFile +" to " + newFile +"\n");
-
             byte[] SendingBuffer = Encoding.Default.GetBytes(sb.ToString());
             client.Send(SendingBuffer);
         }
@@ -498,7 +401,7 @@ namespace Client
 
                 String[] nameArray = fileName.Split('\\');
                 String fileToSend = nameArray[nameArray.Length - 1];
-                monitor.AppendText("Started sending the file named " + fileToSend + "\n");
+                
 
                 for (int i = 0; i < NoOfPackets; i++)
                 {
@@ -516,7 +419,7 @@ namespace Client
                     Fs.Read(SendingBuffer, 0, CurrentPacketLength);
                     client.Send(SendingBuffer);
                 }
-                monitor.AppendText("Sent the file named " + fileToSend + "\n");
+                
                 Fs.Close();
             }
             catch
@@ -568,13 +471,27 @@ namespace Client
 
         private void btn_ChangeFileName_Click(object sender, EventArgs e)
         {
+            if(tb_NewFileName.Text.Equals("") || tb_OldFileName.Text.Equals(""))
+            {
+                showNotificationBalloon("The file names must be entered");
+            }
+            else
+            {
+                SendMessage("chan");
+            }
             
-            SendMessage("chan");
         }
 
         private void btn_Delete_Click(object sender, EventArgs e)
         {
-            SendMessage("dlte");
+            if (tb_FileToDelete.Text.Equals("") )
+            {
+                showNotificationBalloon("The file name must be entered");
+            }else
+            {
+                SendMessage("dlte");
+            }
+            
         }
 
         private void btn_Download_Click(object sender, EventArgs e)
@@ -590,20 +507,23 @@ namespace Client
 
                 fileToReceive = downloadFile_tb.Text;
                 SendMessage("down");
-            }          
+            }
+            else
+            {
+                showNotificationBalloon("The file name must be entered");
+            }       
         }
 
         private void btn_Disconnect_Click(object sender, EventArgs e)
         {
+            //Ask user 
             connectButton.Enabled = true;
             nameUserTb.Enabled = true;
             PortNumber.Enabled = true;
             IP.Enabled = true;
 
-            SendMessage("close");
-
-            client.Close();
-            monitor.AppendText(Environment.NewLine + "Disconnected from server " + "");
+            SendMessage("disc");
+            
         }
     }
 }

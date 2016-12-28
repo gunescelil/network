@@ -15,6 +15,8 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using UserNamespace;
+using System.Runtime.InteropServices;
+using System.Text.RegularExpressions;
 
 namespace Server
 {
@@ -89,29 +91,12 @@ namespace Server
                 try
                 {
                     possibleClient = server.Accept();
-                    /*if (TakeUserNameExists(possibleClient))
-                    {
-                        byte[] buffer = Encoding.ASCII.GetBytes("usno");
-                        possibleClient.Send(buffer);
-                        possibleClient.Close();
-                    }
-                    else
-                    {
-                        byte[] buffer = Encoding.ASCII.GetBytes("welc");
-                        possibleClient.Send(buffer);
+                    
+                    Thread thrMessage;
+                    //thrMessage = new Thread(new ThreadStart( ReceiveMessage ));                
+                    thrMessage = new Thread(() => ReceiveMessage(possibleClient));
+                    thrMessage.Start();
 
-                       // Thread thrReceive;
-                        //thrReceive = new Thread(new ThreadStart(Receive));
-                        //thrReceive.Start();
-
-                        int managedThreadId = Thread.CurrentThread.ManagedThreadId;
-                        Console.WriteLine("ManagedThreadId = " + managedThreadId);
-                        monitor.AppendText("ManagedThreadId = " + managedThreadId);*/
-                        Thread thrMessage;
-                        //thrMessage = new Thread(new ThreadStart( ReceiveMessage ));                
-                        thrMessage = new Thread(() => ReceiveMessage(possibleClient));
-                        thrMessage.Start();
-                    //}
                 }
                 catch
                 {
@@ -173,7 +158,7 @@ namespace Server
 
 
         /* This function is to receive text messages from client.
-         * But it is not used and implemented
+         * 
          * */
         private void ReceiveMessage(Socket s)
         {
@@ -247,7 +232,7 @@ namespace Server
             else if (!checkUserNameExists(u)) // User name does not exist
             {
                 byte[] buffer = Encoding.ASCII.GetBytes("welc");
-                monitor.AppendText("A client named " + u.getUserName() + " is connected \n");
+                monitor.AppendText("A client named " + u.getUserName() + " is accepted \n");
                 u.getSocket().Send(buffer);
                 userList.Add(u);
                 socketList.Add(u.getSocket());
@@ -298,7 +283,6 @@ namespace Server
                     break;
                 case "lico":
                     String username = u.getUserName();
-                    monitor.AppendText(username);
                     String[] fileArray = Directory.GetFiles(Environment.GetFolderPath(Environment.SpecialFolder.Desktop) + "\\Server\\" + username);
                     StringBuilder sb = new StringBuilder();
                     for(int i = 0; i < fileArray.Length ;i++)
@@ -347,23 +331,23 @@ namespace Server
                     sendFileData(u);
                     break;
                 case "fcom":
-                    monitor.AppendText("File is sent to the server");
+                    monitor.AppendText("File is sent to the client\n");
                     break;
-                
-                    
-
-
+                case"disc": // User send a message that he is disconnecting
+                    sendMessage("dsok", u); // I said okay                     
+                    break;
+                case "dico":
+                    sendMessage("dido", u);
+                    nameList.Remove(u.getUserName());
+                    userList.Remove(u);
+                    monitor.AppendText("User " + u.getUserName() + " is disconnected from server\n");
+                    u.getSocket().Close();
+                    break;
             }
-
-
         }
 
         private void sendNumberOfPackets(User u)
         {
-
-            ////////////////////////
-
-
             String filePath = Environment.GetFolderPath(Environment.SpecialFolder.Desktop) + "\\Server\\" + u.getUserName() + "\\" + u.getFileNameForDownload();
             byte[] SendingBuffer = null;
             FileStream Fs = new FileStream(filePath, FileMode.Open, FileAccess.Read);
@@ -420,13 +404,6 @@ namespace Server
 
         }
 
-        public void sendFileToClient(User u)
-        {
-
-        }
-
-
-
         public void receiveFileNameToDelete(User u)
         {
             Socket s = u.getSocket();
@@ -437,9 +414,8 @@ namespace Server
 
             System.IO.File.Delete(filePath);
             monitor.AppendText("Deleted the file named " + file + " \n");
-
+            sendMessage("dlco",u);
         }
-
 
         public void receiveFileNamesForRename(User u)
         {
@@ -454,11 +430,43 @@ namespace Server
             String oldFile = files[0];
             String newFile = files[1];
 
+            if (checkFileExists(usersDirectory + "\\" + oldFile) && checkFileNameValid(newFile))
+            {
+                if (checkFileNameValid(newFile))
+                {
+                    System.IO.File.Move(usersDirectory + "\\" + oldFile, usersDirectory + "\\" + newFile);
+                    monitor.AppendText("Renamed the file named " + oldFile + " to " + newFile + "\n");
+                }
+                else
+                {
+                    sendMessage("fnic",u); //  file name has invalid characters
+                }
+            }
+            else
+            {
+                sendMessage("fdne", u); // file does not exist
+            }
+
+            
+        }
 
 
+        public bool checkFileExists(String path)
+        {
+            if(File.Exists(path))
+            {
+                return true;
+            }
+            return false;
+        }
 
-            System.IO.File.Move(usersDirectory+"\\"+ oldFile, usersDirectory + "\\" + newFile);
-            monitor.AppendText("Renamed the file named " + oldFile + " to " + newFile + "\n");
+        public bool checkFileNameValid(String path)
+        {
+            Regex containsABadCharacter = new Regex("["
+                      + Regex.Escape(new string(System.IO.Path.GetInvalidPathChars())) + "]");
+            if (containsABadCharacter.IsMatch(path)) { return false; };
+
+            return true;
         }
 
 
@@ -497,11 +505,7 @@ namespace Server
                         throw new SocketException();
                         monitor.AppendText("Something went wrong while reading the buffer\n");
                     }
-
-                    //string newmessage = Encoding.Default.GetString(buffer);
-                    //newmessage = newmessage.Substring(0, newmessage.IndexOf("\0"));
                     fileStream.Write(buffer, 0, rec);
-                    //Console.Write("Client: " + newmessage + "\r\n");
                 }
                 catch
                 {
@@ -511,7 +515,6 @@ namespace Server
                     }
                     s.Close(); socketList.Remove(s); userList.Remove(u); nameList.Remove(username);
                 }
-
             }
             monitor.AppendText(username + " finished uploading " + filename + "\n");
             fileStream.Close();
@@ -539,113 +542,8 @@ namespace Server
             return result;
         }
 
-        
-
-
-
-
-        //this function is used in ThrReceive
-        //very similar to the client version
-        //displays the received message in the console.
-        static private void Receive()
-        {
-            Socket n = socketList[socketList.Count - 1];
-            bool connected = true;
-            while (connected)
-            {
-                //Socket n = socketList[socketList.Count - 1];
-                byte[] namebuffer = new byte[64];
-                int receivedNameCharCount = n.Receive(namebuffer);
-                if (System.Text.Encoding.UTF8.GetString(namebuffer, 0, receivedNameCharCount).Equals("close"))
-                {
-                    connected = false;
-                    monitor.AppendText("kapa");
-                    socketList.Remove(n);
-                    n.Close();
-                }
-                else
-                {
-                    String username = "", filename = "";
-                    int packetNumberToReceive = 0;
-                    // String filename = Convert.ToString(namebuffer);
-                    String[] narray = System.Text.Encoding.UTF8.GetString(namebuffer, 0, receivedNameCharCount).Split('\\');
-                    if (narray[0].Length >= 3)
-                        if (narray[0].Substring(0, 3) == "PNP")
-                        {
-                            username = narray[0].Substring(3, narray[0].Length - 3);
-
-                            // String filename = System.Text.Encoding.UTF8.GetString(namebuffer, 0, receivedNameCharCount);
-                            filename = narray[1];
-                            //filename.Substring(0, filename.IndexOf('0'));
-
-                            //byte[] countBuffer = new byte[64];
-                            //int numberOfPacketsByteNumber = n.Receive(countBuffer); // The number of packets
-                            // String numberOfPacketsString = System.Text.Encoding.UTF8.GetString(countBuffer, 0, numberOfPacketsByteNumber);
-                            String numberOfPacketsString = narray[2];
-                            packetNumberToReceive = Int32.Parse(numberOfPacketsString);
-                        }
-
-                    //String myDir = "C:\\Users\\asus\\Desktop\\Server\\" + nameList[nameList.Count-1];
-                    if (username != "" && filename != "")
-                    {
-                        String myDir = Environment.GetFolderPath(Environment.SpecialFolder.Desktop) + "\\Server\\" + username;
-                        System.IO.Directory.CreateDirectory(myDir);
-                        Stream fileStream = File.OpenWrite(Environment.GetFolderPath(Environment.SpecialFolder.Desktop) + "\\Server\\" + username + "\\" + filename);
-
-                        monitor.AppendText(username + " is uploading a file named" + filename + "\n");
-
-                        // TODO: 
-
-                        int i = 0;
-                        while (i < packetNumberToReceive)
-                        {
-                            try
-                            {
-
-
-                                Byte[] buffer = new byte[BufferSize];
-                                int rec = n.Receive(buffer);
-
-                                if (rec <= 0)
-                                {
-                                    throw new SocketException();
-                                    monitor.AppendText("Something went wrong while reading the buffer\n");
-                                }
-
-                                //string newmessage = Encoding.Default.GetString(buffer);
-                                //newmessage = newmessage.Substring(0, newmessage.IndexOf("\0"));
-                                fileStream.Write(buffer, 0, rec);
-                                //Console.Write("Client: " + newmessage + "\r\n");
-
-
-
-                            }
-                            catch
-                            {
-                                if (!terminating)
-                                {
-                                    Console.Write("Client has disconnected...\n");
-                                }
-                                n.Close();
-                                socketList.Remove(n);
-                                connected = false;
-
-
-                            }
-                            i++;
-                        }
-                        monitor.AppendText(username + " finished uploading " + filename + "\n");
-                        fileStream.Close();
-
-
-                    }
-                }
-            }
-        }
-
 
     }
-
 }
 
 
